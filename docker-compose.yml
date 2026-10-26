@@ -1,0 +1,79 @@
+version: '3.9'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  genesys-adaptor:
+    build: ./packages/genesys-adaptor
+    ports:
+      - "4001:4001"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - GENESYS_NOTIFICATION_CHANNEL_URL=${GENESYS_NOTIFICATION_CHANNEL_URL}
+      - GENESYS_ACCESS_TOKEN=${GENESYS_ACCESS_TOKEN}
+      - PORT=4001
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  ai-engine:
+    build: ./packages/ai-engine
+    ports:
+      - "4002:4002"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - PORT=4002
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  compliance-engine:
+    build: ./packages/compliance-engine
+    ports:
+      - "4003:4003"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - PORT=4003
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  knowledge-service:
+    build: ./packages/knowledge-service
+    ports:
+      - "4004:4004"
+    environment:
+      - ENABLE_OPS_GUIDANCE=${ENABLE_OPS_GUIDANCE:-false}
+      - PORT=4004
+
+  api-gateway:
+    build: ./packages/api-gateway
+    ports:
+      - "4000:4000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - AI_ENGINE_URL=http://ai-engine:4002
+      - COMPLIANCE_ENGINE_URL=http://compliance-engine:4003
+      - KNOWLEDGE_SERVICE_URL=http://knowledge-service:4004
+      - GENESYS_ADAPTOR_URL=http://genesys-adaptor:4001
+      - PORT=4000
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  ui:
+    build: ./packages/ui
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway

@@ -1,0 +1,33 @@
+{
+  "name": "agent-assist-platform",
+  "version": "1.0.0",
+  "description": "Real-time Agent Assist platform for voice-first and digital operations with Taglish support",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:gateway\" \"npm run dev:genesys\" \"npm run dev:ai\" \"npm run dev:compliance\" \"npm run dev:knowledge\" \"npm run dev:ui\"",
+    "dev:gateway": "npm run dev --workspace=packages/api-gateway",
+    "dev:genesys": "npm run dev --workspace=packages/genesys-adaptor",
+    "dev:ai": "npm run dev --workspace=packages/ai-engine",
+    "dev:compliance": "npm run dev --workspace=packages/compliance-engine",
+    "dev:knowledge": "npm run dev --workspace=packages/knowledge-service",
+    "dev:ui": "npm run dev --workspace=packages/ui",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:build": "docker compose build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "concurrently": "^8.2.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}
